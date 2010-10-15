@@ -1,21 +1,28 @@
-node-gc
+node-binary
 =============
 
-A very small wrapper around v8 Garbage collection. 
+A binary packer and unpacker
 
 To build:
 
 node-waf configure
 node-waf build
 
-you should then have a gc.node binary which you will need to make available to any 
-scripts that want to use it.
-
 To use in a script:
 
-var gc = require("./gc");
+var binary = require("./lib/binary");
 
-var GC = new gc.GC();
-gc.collect();
+var bin = new binary.Binary();
 
-run test.js for a full example.
+var buff = new Buffer(1024);
+
+bin.pack([
+	{"int": 1},
+	{"int16": 2},
+	{"int32": 3},
+	{"string": "goodbye"}
+], buff, 0);
+
+var tmp = bin.unpack("onNs7", 0, buff);
+
+run tests/test.js for a full example.
