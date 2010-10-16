@@ -21,7 +21,7 @@ If false, the body will be allocated on the message object as it is parsed. It w
 	"BINARY": 0,
 	"ASCII": 1,
 	"UTF8": 2
-},
+\},
 </code>
 
 Default is BINARY.
@@ -40,7 +40,7 @@ You can set encoding and chunked by passing the constructor an options object as
 \{
 	encoding: 0|1|2,
 	chunked: true|false
-}
+\}
 </code>
 
 ### `execute(buffer, start, end)`
@@ -94,11 +94,11 @@ fired if chunked = true.
 		cashi: int32,
 		caslo: int32,
 		bodylen: int32
-	},
+	\},
 	[o]key: string,
-	[o]extra: \{},
+	[o]extra: \{\},
 	[o]body: string
-}
+\}
 </code>
 
 # Example
@@ -112,7 +112,7 @@ var memc = require("../lib/parser");
 	var parser = new memc.parser(\{
 		"chunked": true,
 		"encoding": memc.constants.encodings.BINARY
-	});
+	\});
 	
 	parser.onMessage = function(message) \{
 		// Will fire when a message has completed fully (i.e. body has been fully parsed), 
@@ -126,8 +126,8 @@ var memc = require("../lib/parser");
 				break;
 			case memc.constants.opcodes.QUIT:
 				break;
-		}
-	};
+		\}
+	\};
 
 	parser.onHeader = function(message) \{
 		// Will fire after the header (first 24 bytes) of a message has been parsed.
@@ -139,19 +139,19 @@ var memc = require("../lib/parser");
 				break;
 			case memc.constants.opcodes.QUIT:
 				break;
-		}
+		\}
 		if(message.header.bodylen > 0) \{
 			if(parser.chunked) \{
 				// save a pointer to the message in current so we can access it the onBody callback 
 				// as we will not get anything in the body when onMessage fires while in chunked mode
 				current = message;
 				current.body = [];
-			}
+			\}
 			else \{
 				// we will get the body on the message returned in the onMessage callback
-			}
-		}
-	};
+			\}
+		\}
+	\};
 
 	parser.onBody = function(buffer, start, end) \{
 		// this will only fire if chunked is set to true. the parser will not set the body of 
@@ -159,17 +159,17 @@ var memc = require("../lib/parser");
 		// NOTE: the parser does not use Buffer.slice(), it is giving you the actual buffer which was passed into it.
 		sys.puts("chunk: " + (end-start));
 		current.body.push(buffer.slice(start, end));
-	};
+	\};
 
 	parser.onError = function(err) \{
 		sys.puts("error\n" + JSON.stringify(err, null, "\t"));
-	};
+	\};
 	
 ...
 
 	stream.ondata = function (buffer, start, end) \{
 		parser.execute(buffer, start, end);
-	};
+	\};
 	
 </code>
 
