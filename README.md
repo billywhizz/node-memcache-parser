@@ -23,8 +23,37 @@ Reset the state of the parser
 
 ## Callbacks
 
-### `onHeader(message)
+### `onHeader(message)`
 
+raised when a header (first 24 bytes of message) has been parsed. more info on header formats 
+
+### `onMessage(message)`
+
+### `onBody(buffer, start, end)`
+
+### `onError(err)`
+
+Message format:
+<code>
+{
+	[m]header: {
+		magic: int,
+		opcode: int,
+		keylen: int16,
+		exlen: int,
+		datatype: int,
+		status/reserved: int16,
+		totlen: int32,
+		opaque: int32,
+		cashi: int32,
+		caslo: int32,
+		bodylen: int32
+	},
+	[o]key: string,
+	[o]extra: {},
+	[o]body: string
+}
+</code>
 
 # Example
 <code>
