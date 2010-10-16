@@ -1,0 +1,10 @@
+2010.10.16, Version 0.0.2
+	* add options for chunked/buffered and body encoding if using buffered
+	* tidied up some code
+	* allow getting body back as string encoded as ascii or utf8
+	* changed opcodes to upper case
+	* added performance test script which generates a csv with results for various body sizes
+	* changed format of messages to be {headers: {}, key: "", extras: {}, body: "" or [] of Buffers}
+2010.10.15, Version 0.0.1
+	* Initial Commit (Andrew Johnston)
+ 
