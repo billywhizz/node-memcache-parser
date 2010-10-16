@@ -4,13 +4,50 @@ A low level binary protocol parser for memcache.
 
 # About
 
+## Options/Properties
+
+### `chunked`
+
+true or false. Default is true. 
+
+If true, body of messages will be made available through the onBody callback and will not be allocated on the message object received in the onMessage event. This allows the callee complete control over the bodies of message and keeps allocations at a minimum.
+
+If false, the body will be allocated on the message object as it is parsed. It will be a string if encoding is set to UTF8 or ASCII. it will be an array of Buffer objects if encoding is set to BINARY
+
+### `encoding`
+
+<code>
+"encodings": {
+	"BINARY": 0,
+	"ASCII": 1,
+	"UTF8": 2
+},
+</code>
+
+Default is BINARY.
+
+Only applies if chunked is false. When chunked is true, only raw buffers will be made available through the onData event. When chunked is false, encoding will determine whether the body is stored as a utf8/ascii encoded string on the message object or as an array of binary buffers.
+
 ## Methods
 
-### `execute(Buffer, start, end)`
+### new Parser(options)
+
+#### options
+
+You can set encoding and chunked by passing the constructor an options obect as follows:
+
+<code>
+{
+	encoding: 0|1|2,
+	chunked: true|false
+}
+</code>
+
+### `execute(buffer, start, end)`
 
 Parse a buffer
 
-#### Buffer
+#### buffer
 a node.js Buffer object
 #### start
 where to start parsing in the buffer
@@ -25,15 +62,25 @@ Reset the state of the parser
 
 ### `onHeader(message)`
 
-raised when a header (first 24 bytes of message) has been parsed. more info on header formats 
+fired when a header (first 24 bytes of message) has been parsed. more info on header formats here:
+http://code.google.com/p/memcached/wiki/MemcacheBinaryProtocol.
+
+At this stage, only the header on the message object will be populated
 
 ### `onMessage(message)`
 
+fired when a message has been completely parsed. if the message has a body and chunked = false, you will
+now have the body, extras and key available on the message
+
 ### `onBody(buffer, start, end)`
+
+fired for each chunk of data being sent to the parser for the current body. this callback will only be
+fired if chunked = true.
 
 ### `onError(err)`
 
-Message format:
+## Message format
+
 <code>
 {
 	[m]header: {
