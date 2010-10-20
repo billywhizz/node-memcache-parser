@@ -1,0 +1,29 @@
+{   
+	"name" : "node-memcache-parser",
+	"version": "0.0.3",
+	"author": {
+		"name": "Andrew Johnston",
+		"url": "http://github.com/billywhizz"
+	},
+	"email": "",
+	"homepage": "http://github.com/billywhizz/node-memcache-parser",
+	"description" : "memcached binary protocol parser",
+	"repositories": [
+		{
+			"type": "git",
+			"url": "https://billywhizz@github.com/billywhizz/node-memcache-parser.git"
+		}
+	],
+	"scripts": {
+		"install": "node-waf configure build"
+	},
+	"directories" : { "lib" : "./lib/" },
+	"licenses" : [ 
+		{
+			"type" : "MIT", 
+			"url" : "http://github.com/billywhizz/node-memcache-parser/blob/master/LICENSE"
+		}   
+	],
+	"engines" : { "node" : ">=0.1.97" },
+	"main" : "./lib/parser.js"
+}

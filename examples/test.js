@@ -7,7 +7,7 @@ var bin = new binary.Binary();
 var key = "node-memcached-test";
 var data = "test-data";
 
-var encoder = new Buffer(24 + key.length + data.length + 8 + 24 + key.length + 24);
+var encoder = new Buffer(24 + key.length + data.length + 8 + 24 + key.length + 24 + 24);
 
 var pos = 0;
 var size = bin.pack([
@@ -56,6 +56,20 @@ size = bin.pack([
         {"int32": 0}
 ], encoder, pos);
 var quitmsg = encoder.slice(pos, pos + size);
+pos += size;
+size = bin.pack([
+        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.opcodes.STAT},
+        {"int16": 0},
+        {"int": 0},
+        {"int": 0},
+        {"int16": 0},
+        {"int32": 0},
+        {"int32": 0},
+        {"int32": 0},
+        {"int32": 0}
+], encoder, pos);
+var statmsg = encoder.slice(pos, pos + size);
 
 var bytesin = 0;
 var bytesout = 0;
@@ -88,7 +102,12 @@ connection.addListener("connect", function() {
 			writeSocket(connection, getmsg);
 		}
 		if(message.header.opcode == memc.constants.opcodes.GET) {
-			writeSocket(connection, quitmsg);
+			writeSocket(connection, statmsg);
+		}
+		if(message.header.opcode == memc.constants.opcodes.STAT) {
+			if(message.header.bodylen == 0) {
+				writeSocket(connection, quitmsg);
+			}
 		}
 	};
 
