@@ -7,7 +7,7 @@ var bin = new binary.Binary();
 var key = "node-memcached-test";
 var data = "test-data";
 
-var encoder = new Buffer(24 + key.length + data.length + 8 + 24 + key.length + 24 + 24);
+var encoder = new Buffer(24 + key.length + data.length + 8 + 24 + key.length + 24 + 24 + (24 + key.length)*3);
 
 var pos = 0;
 var size = bin.pack([
@@ -18,7 +18,7 @@ var size = bin.pack([
         {"int": 0},
         {"int16": 0},
         {"int32": data.length + key.length + 8},
-        {"int32": 0},
+        {"int32": 1},
         {"int32": 0},
         {"int32": 0},
         {"int32": 0xdeadbeef},
@@ -36,12 +36,57 @@ size = bin.pack([
         {"int": 0},
         {"int16": 0},
         {"int32": key.length},
-        {"int32": 0},
+        {"int32": 2},
         {"int32": 0},
         {"int32": 0},
         {"string": key}
 ], encoder, pos);
 var getmsg = encoder.slice(pos, pos + size);
+pos += size;
+size = bin.pack([
+        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.opcodes.GETK},
+        {"int16": key.length},
+        {"int": 0},
+        {"int": 0},
+        {"int16": 0},
+        {"int32": key.length},
+        {"int32": 2},
+        {"int32": 0},
+        {"int32": 0},
+        {"string": key}
+], encoder, pos);
+var getkmsg = encoder.slice(pos, pos + size);
+pos += size;
+size = bin.pack([
+        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.opcodes.GETQ},
+        {"int16": key.length},
+        {"int": 0},
+        {"int": 0},
+        {"int16": 0},
+        {"int32": key.length},
+        {"int32": 2},
+        {"int32": 0},
+        {"int32": 0},
+        {"string": key}
+], encoder, pos);
+var getqmsg = encoder.slice(pos, pos + size);
+pos += size;
+size = bin.pack([
+        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.opcodes.GETKQ},
+        {"int16": key.length},
+        {"int": 0},
+        {"int": 0},
+        {"int16": 0},
+        {"int32": key.length},
+        {"int32": 2},
+        {"int32": 0},
+        {"int32": 0},
+        {"string": key}
+], encoder, pos);
+var getkqmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
         {"int": memc.constants.general.MEMC_MAGIC.request},
@@ -51,7 +96,7 @@ size = bin.pack([
         {"int": 0},
         {"int16": 0},
         {"int32": 0},
-        {"int32": 0},
+        {"int32": 3},
         {"int32": 0},
         {"int32": 0}
 ], encoder, pos);
@@ -65,7 +110,7 @@ size = bin.pack([
         {"int": 0},
         {"int16": 0},
         {"int32": 0},
-        {"int32": 0},
+        {"int32": 4},
         {"int32": 0},
         {"int32": 0}
 ], encoder, pos);
@@ -96,23 +141,33 @@ connection.addListener("connect", function() {
 	});
 	
 	connection.parser.onMessage = function(message) {
-		sys.puts("message\n" + JSON.stringify(message, null, "\t"));
+		sys.puts(JSON.stringify(message, null, "\t"));
 		count++;
 		if(message.header.opcode == memc.constants.opcodes.SET) {
+			writeSocket(connection, getqmsg);
+		}
+		if(message.header.opcode == memc.constants.opcodes.GETQ) {
+			writeSocket(connection, getkqmsg);
+		}
+		if(message.header.opcode == memc.constants.opcodes.GETKQ) {
 			writeSocket(connection, getmsg);
 		}
 		if(message.header.opcode == memc.constants.opcodes.GET) {
+			connection.parser.chunked = false;
+			connection.parser.encoding = memc.constants.encodings.ASCII;
 			writeSocket(connection, statmsg);
 		}
 		if(message.header.opcode == memc.constants.opcodes.STAT) {
 			if(message.header.bodylen == 0) {
+				connection.parser.chunked = true;
+				connection.parser.encoding = memc.constants.encodings.BINARY;
 				writeSocket(connection, quitmsg);
 			}
 		}
 	};
 
 	connection.parser.onHeader = function(message) {
-		sys.puts("header\n" + JSON.stringify(message, null, "\t"));
+		//sys.puts("header\n" + JSON.stringify(message, null, "\t"));
 		if(connection.parser.chunked && message.header.bodylen > 0) {
 			connection.current = message;
 			connection.current.body = [];
@@ -120,7 +175,7 @@ connection.addListener("connect", function() {
 	};
 
 	connection.parser.onBody = function(buffer, start, end) {
-		sys.puts("chunk: " + (end-start));
+		//sys.puts("chunk: " + (end-start));
 		connection.current.body.push(buffer.slice(start, end));
 	};
 

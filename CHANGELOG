@@ -1,3 +1,5 @@
+2010.10.21, Version 0.0.4
+	* added basic memcached client library and test script
 2010.10.20, Version 0.0.3
 	* fixed issue with non-chunked parsing
 	* added error codes that were missing
