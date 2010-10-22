@@ -42,6 +42,10 @@ var value = "hello";
 
 client.connect("/tmp/memcached.sock", null, function() {
 	sys.puts("connected");
+	client.flushq(null, function(message) {
+		// we should only get a callback if there is an error
+		sys.puts("FLUSHQ: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
+	});
 	client.flush(null, function(message) {
 		sys.puts("FLUSH: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
 	});
@@ -58,10 +62,83 @@ client.connect("/tmp/memcached.sock", null, function() {
 				sys.puts("GETQ: " + message.body);
 			});
 			client.getkq(key, function(message) {
-				sys.puts("GETKQ: " + message.body);
+				sys.puts("GETKQ: " + message.key + ":" + message.body);
 			});
 			client.getk(key, function(message) {
-				sys.puts("GETK: " + message.body);
+				sys.puts("GETK: " + message.key + ":" + message.body);
+			});
+			client.setq("arse", "bum", 0x01, 3600, function(message) {
+				// we should only get a callback if there is an error
+				sys.puts("SETQ: " + message.header.status);
+			});
+			client.getq("arse", function(message) {
+				sys.puts("GETQ: " + message.body);
+			});
+			client.add("arse", "bum", 0x01, 3600, function(message) {
+				sys.puts("ADD: " + message.header.status);
+			});
+			client.add("arse1", "bum", 0x01, 3600, function(message) {
+				sys.puts("ADD: " + message.header.status);
+			});
+			client.addq("arse1", "bum", 0x01, 3600, function(message) {
+				// we should only get a callback if there is an error
+				sys.puts("ADDQ: " + message.header.status);
+			});
+			client.replace("arse1", "bum", 0x01, 3600, function(message) {
+				sys.puts("REPLACE: " + message.header.status);
+			});
+			client.replace("arse123", "bum", 0x01, 3600, function(message) {
+				sys.puts("REPLACE: " + message.header.status);
+			});
+			client.replaceq("arse123", "bum", 0x01, 3600, function(message) {
+				sys.puts("REPLACEQ: " + message.header.status);
+			});
+			client.replaceq("arse1", "wee", 0x01, 3600, function(message) {
+				sys.puts("REPLACEQ: " + message.header.status);
+			});
+			client.incq("tester1", 1, 1, 3600, function(message) {
+				sys.puts("INCQ: " + message.header.status);
+				sys.puts(message.body);
+			});
+			client.incq("tester1", 2, 0, 3600, function(message) {
+				sys.puts("INCQ: " + message.header.status);
+				sys.puts(JSON.stringify(message));
+			});
+			client.inc("tester1", 3, 0, 3600, function(message) {
+				sys.puts("INC: " + message.header.status);
+				sys.puts(JSON.stringify(message));
+			});
+			client.decq("tester1", 1, 0, 3600, function(message) {
+				sys.puts("DECQ: " + message.header.status);
+				sys.puts(JSON.stringify(message));
+			});
+			client.dec("tester1", 2, 0, 3600, function(message) {
+				sys.puts("DEC: " + message.header.status);
+				sys.puts(JSON.stringify(message));
+			});
+			client.deleteq("tester109", function(message) {
+				sys.puts("DELETEQ: " + message.header.status);
+			});
+			client.deleteq("tester1", function(message) {
+				sys.puts("DELETEQ: " + message.header.status);
+			});
+			client.delete("tester1", function(message) {
+				sys.puts("DELETE: " + message.header.status);
+			});
+			client.appendq("arse", "1", function(message) {
+				sys.puts("APPENDQ: " + message.header.status);
+			});
+			client.prependq("arse", "1", function(message) {
+				sys.puts("PREPENDQ: " + message.header.status);
+			});
+			client.append("arse", "2", function(message) {
+				sys.puts("APPEND: " + message.header.status);
+			});
+			client.prepend("arse", "2", function(message) {
+				sys.puts("PREPEND: " + message.header.status);
+			});
+			client.get("arse", function(message) {
+				sys.puts("GET: " + message.body);
 			});
 			client.get(key, function(message) {
 				sys.puts("GET: " + message.body);

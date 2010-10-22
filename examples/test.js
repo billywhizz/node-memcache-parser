@@ -7,7 +7,7 @@ var bin = new binary.Binary();
 var key = "node-memcached-test";
 var data = "test-data";
 
-var encoder = new Buffer(24 + key.length + data.length + 8 + 24 + key.length + 24 + 24 + (24 + key.length)*3);
+var encoder = new Buffer(24 + key.length + data.length + 8 + 24 + key.length + (24 + key.length)*5);
 
 var pos = 0;
 var size = bin.pack([
