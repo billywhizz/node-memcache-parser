@@ -40,7 +40,7 @@ var value = "hello";
 {"method": "flushq", "params":"expiration, cb"}
 */
 
-client.connect("/tmp/memcached.sock", null, function() {
+client.connect(process.ARGV[2], null, function() {
 	sys.puts("connected");
 	client.flushq(null, function(message) {
 		// we should only get a callback if there is an error
@@ -141,6 +141,7 @@ client.connect("/tmp/memcached.sock", null, function() {
 				sys.puts("GET: " + message.body);
 			});
 			client.get(key, function(message) {
+				sys.puts(JSON.stringify(message, null, "\t"));
 				sys.puts("GET: " + message.body);
 				var stat = {};
 				client.stat(null, function(message) {
@@ -148,10 +149,10 @@ client.connect("/tmp/memcached.sock", null, function() {
 						stat[message.key] = message.body;
 					}
 					else {
-						sys.puts("STAT:\n" + JSON.stringify(stat, null, "\t"));
 						client.delete(key, function(message) {
 							sys.puts("DELETE: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
 							client.quit(function(message) {
+								sys.puts("QUIT:\n" + JSON.stringify(message, null, "\t"));
 								sys.puts("QUIT: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
 							});
 						});

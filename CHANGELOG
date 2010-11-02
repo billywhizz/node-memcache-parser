@@ -1,3 +1,6 @@
+2010.10.21, Version 0.0.5
+	* added unit tests for all operations
+	* need to fix increment/decrement 64 bit issue
 2010.10.21, Version 0.0.4
 	* added basic memcached client library and test script
 2010.10.20, Version 0.0.3
