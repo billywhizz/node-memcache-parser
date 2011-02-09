@@ -1,10 +1,9 @@
-var sys = require("sys");
-var binary = require("../lib/binary");
+var Binary = require("binary").Binary;
 var memc = require("../lib/parser");
 var net = require("net");
 
 process.on('uncaughtException', function (err) {
-	sys.puts('Caught exception: ' + JSON.stringify(err, null, "\t"));
+	console.log('Caught exception: ' + JSON.stringify(err, null, "\t"));
 });
 
 var key = "stress_test";
@@ -35,12 +34,12 @@ var data = "";
 for(var i=0; i<bodysize; i++) {
 	data += "0";
 }
-var bin = new binary.Binary();
+var bin = new Binary();
 var encoder = new Buffer(24 + key.length + data.length + 8 + 24 + key.length + 24);
 
 var pos = 0;
 var size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.SET},
         {"int16": key.length},
         {"int": 0x08},
@@ -58,7 +57,7 @@ var size = bin.pack([
 var setmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.GET},
         {"int16": key.length},
         {"int": 0},
@@ -73,7 +72,7 @@ size = bin.pack([
 var getmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.QUIT},
         {"int16": 0},
         {"int": 0},
@@ -122,7 +121,7 @@ function client() {
 			"encoding": encoding
 		});
 		
-		connection.parser.onMessage = function(message) {
+		connection.parser.onMessage = function() {
 			count++;
 			if(sent < quitafter) {
 				writeSocket(connection, getmsg);
@@ -135,19 +134,19 @@ function client() {
 			}
 		};
 	
-		connection.parser.onHeader = function(message) {
-			if(connection.parser.chunked && message.header.bodylen > 0) {
-				connection.current = message;
+		connection.parser.onHeader = function(header) {
+			connection.current = {"header": header};
+			if(connection.parser.chunked && header.bodylen > 0) {
 				connection.current.body = [];
 			}
 		};
 	
 		connection.parser.onBody = function(buffer, start, end) {
-			//connection.current.body.push(buffer.slice(start, end));
+			connection.current.body.push(buffer.slice(start, end));
 		};
 	
 		connection.parser.onError = function(err) {
-			sys.puts("error\n" + JSON.stringify(err, null, "\t"));
+			console.log("error\n" + JSON.stringify(err, null, "\t"));
 		};
 	
 		writeSocket(connection, setmsg);
@@ -165,7 +164,7 @@ function client() {
 		connection.end();
 	});
 	
-	connection.connect("/tmp/memcached.sock");
+	connection.connect("/tmp/qsrv.1.sock");
 }
 
 for(var i=0; i<numclients; i++) {
@@ -178,7 +177,7 @@ function getstats() {
 	var now = new Date().getTime();
 	var elapsed = (now - then)/1000;
 	var rps = count - last;
-	sys.puts(bytesin + "," + bytesout + "," + encoding + "," + bodysize + "," + clients + "," + ((((bytesin)/elapsed)*8)/(1024*1024)).toFixed(2) + "," + ((((bytesout)/elapsed)*8)/(1024*1024)).toFixed(2) + "," + count + "," + sent + "," + (rps/elapsed).toFixed(2) + "," + (sent-count));
+	console.log(bytesin + "," + bytesout + "," + encoding + "," + bodysize + "," + clients + "," + ((((bytesin)/elapsed)*8)/(1024*1024)).toFixed(2) + "," + ((((bytesout)/elapsed)*8)/(1024*1024)).toFixed(2) + "," + count + "," + sent + "," + (rps/elapsed).toFixed(2) + "," + (sent-count));
 	then = new Date().getTime();
 	last = count;
 	bytesin = 0;

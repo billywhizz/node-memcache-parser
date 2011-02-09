@@ -40,7 +40,7 @@ var value = "hello";
 {"method": "flushq", "params":"expiration, cb"}
 */
 
-client.connect("/tmp/memcached.sock", null, function() {
+client.connect("/tmp/qsrv.1.sock", null, function() {
 	sys.puts("connected");
 	client.flush(null, function(message) {
 		sys.puts("FLUSH: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));

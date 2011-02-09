@@ -1,5 +1,5 @@
 var sys = require("sys");
-var binary = require("../lib/binary");
+var binary = require("binary");
 var memc = require("../lib/parser");
 var net = require("net");
 
@@ -11,7 +11,7 @@ var encoder = new Buffer(24 + key.length + data.length + 8 + 24 + key.length + (
 
 var pos = 0;
 var size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.SET},
         {"int16": key.length},
         {"int": 0x08},
@@ -29,7 +29,7 @@ var size = bin.pack([
 var setmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.GET},
         {"int16": key.length},
         {"int": 0},
@@ -44,7 +44,7 @@ size = bin.pack([
 var getmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.GETK},
         {"int16": key.length},
         {"int": 0},
@@ -59,7 +59,7 @@ size = bin.pack([
 var getkmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.GETQ},
         {"int16": key.length},
         {"int": 0},
@@ -74,7 +74,7 @@ size = bin.pack([
 var getqmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.GETKQ},
         {"int16": key.length},
         {"int": 0},
@@ -89,7 +89,7 @@ size = bin.pack([
 var getkqmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.QUIT},
         {"int16": 0},
         {"int": 0},
@@ -103,7 +103,7 @@ size = bin.pack([
 var quitmsg = encoder.slice(pos, pos + size);
 pos += size;
 size = bin.pack([
-        {"int": memc.constants.general.MEMC_MAGIC.request},
+        {"int": memc.constants.general.MAGIC.request},
         {"int": memc.constants.opcodes.STAT},
         {"int16": 0},
         {"int": 0},
@@ -140,8 +140,8 @@ connection.addListener("connect", function() {
 		"encoding": memc.constants.encodings.BINARY
 	});
 	
-	connection.parser.onMessage = function(message) {
-		sys.puts(JSON.stringify(message, null, "\t"));
+	connection.parser.onMessage = function() {
+		var message = connection.current;
 		count++;
 		if(message.header.opcode == memc.constants.opcodes.SET) {
 			writeSocket(connection, getqmsg);
@@ -166,42 +166,50 @@ connection.addListener("connect", function() {
 		}
 	};
 
-	connection.parser.onHeader = function(message) {
-		//sys.puts("header\n" + JSON.stringify(message, null, "\t"));
-		if(connection.parser.chunked && message.header.bodylen > 0) {
-			connection.current = message;
-			connection.current.body = [];
-		}
+	connection.parser.onHeader = function(header) {
+		connection.current = {"header": header, "body": []};
+	};
+
+	connection.parser.onExtras = function(extras) {
+		connection.current.extras = extras;
+	};
+
+	connection.parser.onKey = function(key) {
+		connection.current.key = key;
 	};
 
 	connection.parser.onBody = function(buffer, start, end) {
-		//sys.puts("chunk: " + (end-start));
-		connection.current.body.push(buffer.slice(start, end));
+		if(connection.parser.chunked) {
+			connection.current.body.push(buffer.slice(start, end));
+		}
+		else {
+			connection.current.body = buffer;
+		}
 	};
 
 	connection.parser.onError = function(err) {
-		sys.puts("error\n" + JSON.stringify(err, null, "\t"));
+		console.log("error\n" + JSON.stringify(err, null, "\t"));
 	};
 
 	writeSocket(connection, setmsg);
 });
 
 connection.addListener("end", function() {
-	sys.puts("end");
+	console.log("end");
 });
 
 connection.addListener("timeout", function() {
-	sys.puts("timeout");
+	console.log("timeout");
 	connection.end();
 });
 
 connection.addListener("close", function() {
-	sys.puts("close");
+	console.log("close");
 	connection.end();
 });
 
 connection.addListener("error", function(exception) {
-	sys.puts("error\n" + JSON.stringify(exception));
+	console.log("error\n" + JSON.stringify(exception));
 });
 
 connection.connect("/tmp/memcached.sock");
