@@ -135,6 +135,7 @@ function client() {
 		};
 	
 		connection.parser.onHeader = function(header) {
+			//console.log(connection.parser.current);
 			connection.current = {"header": header};
 			if(connection.parser.chunked && header.bodylen > 0) {
 				connection.current.body = [];
@@ -164,7 +165,7 @@ function client() {
 		connection.end();
 	});
 	
-	connection.connect("/tmp/qsrv.1.sock");
+	connection.connect("/tmp/memcached.sock");
 }
 
 for(var i=0; i<numclients; i++) {
