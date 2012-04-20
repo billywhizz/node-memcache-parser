@@ -1,4 +1,3 @@
-var sys = require("sys");
 var memc = require("../lib/client");
 
 var client = new memc.Connection();
@@ -7,7 +6,10 @@ client.parser.chunked = false;
 client.parser.encoding = memc.constants.encodings.UTF8;
 
 var key = "node-memcached-test";
-var value = "hello";
+var value = "12345";
+
+var port = process.argv[2] || 11211;
+var host = process.argv[3] || "127.0.0.1";
 
 /*
 {"method": "connect", "params":"port, host, cb"}
@@ -40,42 +42,33 @@ var value = "hello";
 {"method": "flushq", "params":"expiration, cb"}
 */
 
-client.connect("/tmp/memcached.sock", null, function() {
-	sys.puts("connected");
+client.connect(port, host, function() {
+	console.log("connected");
 	client.flush(null, function(message) {
-		sys.puts("FLUSH: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
+		console.log("FLUSH: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
 	});
 	client.version(function(message) {
-		sys.puts("VERSION: " + message.body);
+		console.log("VERSION: " + message.body);
 	});
 	client.noop(function(message) {
-		sys.puts("NOOP: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
+		console.log("NOOP: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
 	});
 	client.set(key, value, 0x01, 3600, function(message) {
 		if(message.header.status == memc.constants.status.NO_ERROR) {
-			sys.puts("SET: OK");
-			client.getq(key, function(message) {
-				sys.puts("GETQ: " + message.body);
-			});
-			client.getkq(key, function(message) {
-				sys.puts("GETKQ: " + message.body);
-			});
-			client.getk(key, function(message) {
-				sys.puts("GETK: " + message.body);
-			});
+			console.log("SET: OK");
 			client.get(key, function(message) {
-				sys.puts("GET: " + message.body);
+				console.log("GET: " + message.body);
 				var stat = {};
 				client.stat(null, function(message) {
 					if(message.header.bodylen > 0) {
 						stat[message.key] = message.body;
 					}
 					else {
-						sys.puts("STAT:\n" + JSON.stringify(stat, null, "\t"));
+						console.log("STAT:\n" + JSON.stringify(stat, null, "\t"));
 						client.delete(key, function(message) {
-							sys.puts("DELETE: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
+							console.log("DELETE: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
 							client.quit(function(message) {
-								sys.puts("QUIT: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
+								console.log("QUIT: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
 							});
 						});
 					}
@@ -83,16 +76,19 @@ client.connect("/tmp/memcached.sock", null, function() {
 			});
 		}
 		else {
-			sys.puts("SET: Error = " + message.header.status);
+			console.log("SET: Error = " + message.header.status);
+			client.quit(function(message) {
+				console.log("QUIT: " + (message.header.status == memc.constants.status.NO_ERROR?"OK":"FAIL"));
+			});
 		}
 	});
 });
 
 client.on("error", function(err) {
-	sys.puts("client error\n" + JSON.stringify(err, null, "\t"));
+	console.log("client error\n" + JSON.stringify(err, null, "\t"));
 });
 
 client.on("close", function() {
-	sys.puts("client closed");
+	console.log("client closed");
 });
 

@@ -1,34 +1,20 @@
-var Binary = require("binary").Binary;
+var Binary = require("../lib/binary").Binary;
 var memc = require("../lib/parser");
 var net = require("net");
 
 process.on('uncaughtException', function (err) {
-	console.log('Caught exception: ' + JSON.stringify(err, null, "\t"));
+	console.log('uncaughtException: ' + err);
+  console.log(err.stack);
 });
 
 var key = "stress_test";
-
-var numclients = 10;
-var bodysize = 16384;
-var encoding = memc.constants.encodings.BINARY;
-var quitafter = 1000000;
-var chunked = true;
-
-if(process.ARGV.length > 2) {
-	numclients = process.ARGV[2];
-}
-if(process.ARGV.length > 3) {
-	bodysize = process.ARGV[3];
-}
-if(process.ARGV.length > 4) {
-	encoding = process.ARGV[4];
-}
-if(process.ARGV.length > 5) {
-	quitafter = parseInt(process.ARGV[5]);
-}
-if(process.ARGV.length > 6) {
-	chunked = (process.ARGV[6] == "true");
-}
+var port = process.argv[2] || 11211;
+var host = process.argv[3] || "127.0.0.1";
+var numclients = process.argv[4] || 10;
+var bodysize = process.argv[5] || 16384;
+var encoding = process.argv[6] || memc.constants.encodings.ASCII;
+var quitafter = process.argv[7] || 1000000;
+var chunked = (process.argv[8] === "true");
 
 var data = "";
 for(var i=0; i<bodysize; i++) {
@@ -92,16 +78,9 @@ var clients = 0;
 var sent = 0;
 
 function writeSocket(socket, buffer) {
-	if(socket.readyState == "open") {
-		try {
-			socket.write(buffer);
-			bytesout += buffer.length;
-			sent++;
-		}
-		catch(ex) {
-		
-		}
-	}
+  socket.write(buffer);
+	bytesout += buffer.length;
+  sent++;
 }
 
 function client() {
@@ -109,10 +88,10 @@ function client() {
 	connection.setNoDelay(true);
 	connection.setTimeout(0);
 	
-	connection.ondata = function (buffer, start, end) {
-		bytesin += (end-start);
-		connection.parser.execute(buffer, start, end);
-	};
+	connection.on("data", function(buffer) {
+		bytesin += (buffer.length);
+		connection.parser.execute(buffer, 0, buffer.length);
+	});
 	
 	connection.addListener("connect", function() {
 		clients++;
@@ -165,7 +144,7 @@ function client() {
 		connection.end();
 	});
 	
-	connection.connect("/tmp/memcached.sock");
+	connection.connect(port, host);
 }
 
 for(var i=0; i<numclients; i++) {
