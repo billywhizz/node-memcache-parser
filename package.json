@@ -24,6 +24,6 @@
 			"url" : "http://github.com/billywhizz/node-memcache-parser/blob/master/LICENSE"
 		}   
 	],
-	"engines" : { "node" : ">=0.1.97" },
+	"engines" : { "node" : ">=0.6.00" },
 	"main" : "./lib/parser.js"
 }
