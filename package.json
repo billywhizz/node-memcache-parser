@@ -1,6 +1,6 @@
 {   
 	"name" : "node-memcache-parser",
-	"version": "0.0.3",
+	"version": "0.1.1",
 	"author": {
 		"name": "Andrew Johnston",
 		"url": "http://github.com/billywhizz"
