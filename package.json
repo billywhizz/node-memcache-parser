@@ -14,9 +14,6 @@
 			"url": "https://billywhizz@github.com/billywhizz/node-memcache-parser.git"
 		}
 	],
-	"scripts": {
-		"install": "node-waf configure build"
-	},
 	"directories" : { "lib" : "./lib/" },
 	"licenses" : [ 
 		{
